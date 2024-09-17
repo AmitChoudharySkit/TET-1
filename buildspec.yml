@@ -1,0 +1,36 @@
+version: 0.2
+
+env:
+  variables:
+    DOCKER_USERNAME: "amitchoudhary001"
+
+phases:
+  pre_build:
+    commands:
+      - echo "Logging in to Docker Hub"
+      - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+
+  build:
+    commands:
+      - cd frontend/
+      - docker build -t amitchoudhary001/frontend:$CODEBUILD_BUILD_NUMBER .
+      - docker tag amitchoudhary001/frontend:$CODEBUILD_BUILD_NUMBER amitchoudhary001/frontend:latest
+      - docker images
+      - docker push amitchoudhary001/frontend:$CODEBUILD_BUILD_NUMBER
+      - docker push amitchoudhary001/frontend:latest
+
+      - cd ../backend/
+      - docker build -t amitchoudhary001/backend:$CODEBUILD_BUILD_NUMBER .
+      - docker tag amitchoudhary001/backend:$CODEBUILD_BUILD_NUMBER amitchoudhary001/backend:latest
+      - docker images
+      - docker push amitchoudhary001/backend:$CODEBUILD_BUILD_NUMBER
+      - docker push amitchoudhary001/backend:latest
+
+      
+
+artifacts:
+  files:
+    - appspec.yml
+    - docker-compose.yml
+    - start.sh
+    
