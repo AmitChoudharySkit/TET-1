@@ -1,31 +1,23 @@
 version: '3'
 services:
-  frontend:
-    image: amitchoudhary001/frontend:latest
-    ports:
-      - "80:80"
-    environment:
-      - REACT_APP_BACKEND_URL=http://backend:5000 
-    
   backend:
     image: amitchoudhary001/backend:latest
+    container_name: backend
     ports:
       - "5000:5000"
+    networks:
+      - frontend-backend-network
 
+  frontend:
+    image: amitchoudhary001/frontend:latest
+    container_name: frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - frontend-backend-network
 
-# version: '3'
-# services:
-#   frontend:
-#     build: ./frontend
-#     ports:
-#       - "3000:3000"  # Map local port 3000 to frontend container port 3000
-#     environment:
-#       - REACT_APP_BACKEND_URL=http://localhost:5000  # Point to local backend container
-
-#   backend:
-#     build: ./backend
-#     ports:
-#       - "5000:5000"  # Map local port 5000 to backend container port 5000
-
-
- 
+networks:
+  frontend-backend-network:
+    driver: bridge
