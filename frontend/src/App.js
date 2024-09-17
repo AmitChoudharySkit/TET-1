@@ -59,7 +59,7 @@ const App = () => {
   const [books, setBooks] = useState([]);
   
   // Get the backend URL from an environment variable
-  const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://backend:5000';
+  const backendUrl = process.env.REACT_APP_BACKEND_URL ;
 
   useEffect(() => {
     axios.get(`${backendUrl}/books`)
