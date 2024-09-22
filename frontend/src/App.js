@@ -59,7 +59,7 @@ const App = () => {
   const [books, setBooks] = useState([]);
   
   // Get the backend URL from an environment variable
-  const backendUrl = "http://13.201.78.75:5000";
+  const backendUrl = "http://13.126.96.212:5000";
 
   useEffect(() => {
     axios.get(`${backendUrl}/books`)
