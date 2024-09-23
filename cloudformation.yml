@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: CloudFormation Template to deploy an EC2 instance with parameterized AMI ID and Instance Type, with open ports for backend
+Description: CloudFormation Template to deploy an EC2 instance with Docker, Docker Compose, CodeDeploy agent, Key Pair, and IAM Role
 
 Parameters:
   InstanceType:
@@ -18,8 +18,18 @@ Parameters:
   AmiId:
     Type: AWS::EC2::Image::Id
     Description: The AMI ID to be used for the EC2 instance
-    Default: ami-0c55b159cbfafe1f0 # Example AMI ID (Amazon Linux 2)
+    Default: ami-08718895af4dfa033  # Updated to the new Amazon Linux 2 AMI
     ConstraintDescription: Must be a valid AMI ID for the region.
+
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+    ConstraintDescription: Must be the name of an existing EC2 KeyPair.
+
+  InstanceProfileName:
+    Type: String
+    Description: The name of an existing IAM Instance Profile that the EC2 instance will use
+    ConstraintDescription: Must be the name of an existing IAM Instance Profile.
 
 Resources:
   EC2Instance:
@@ -27,11 +37,42 @@ Resources:
     Properties: 
       InstanceType: !Ref InstanceType
       ImageId: !Ref AmiId
+      KeyName: !Ref KeyName
+      IamInstanceProfile: !Ref InstanceProfileName
+      SecurityGroups:
+        - Ref: InstanceSecurityGroup
       Tags:
         - Key: Name
           Value: MyEC2Instance
-      SecurityGroups:
-        - Ref: InstanceSecurityGroup
+      UserData: 
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          # Update system packages
+          sudo yum update -y
+
+          # Install Docker and start the Docker service
+          sudo amazon-linux-extras install docker -y
+          sudo yum install -y docker
+          sudo systemctl start docker
+          sudo systemctl enable docker
+
+          # Add ec2-user to the docker group
+          sudo usermod -a -G docker ec2-user
+
+          # Install Docker Compose
+          sudo curl -L https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose
+
+          # Install additional packages
+          sudo yum install -y ruby wget
+
+          # Install and start CodeDeploy agent
+          cd /home/ec2-user
+          wget https://aws-codedeploy-ap-south-1.s3.ap-south-1.amazonaws.com/latest/install
+          chmod +x ./install
+          sudo ./install auto
+          sudo systemctl enable codedeploy-agent
+          sudo systemctl start codedeploy-agent
 
   InstanceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
